@@ -119,7 +119,9 @@ $nFields3 = count($fieldNames3);
 
 
 echo "<h1>ADA &mdash; Chaffin Method Results</h1>\n";
-echo "<div style=\"margin-top:-8px\"><i>The data on this page refreshes at most once per {$cacheTime} seconds.</i></div><br />\n";
+echo "<div style=\"margin-top:-8px\"><i>The data on this page refreshes at most once per {$cacheTime} seconds.</i><<br />\n";
+
+echo "<i>Please see the <a href='https://github.com/superpermutators/superperm/tree/master/DistributedChaffinMethod'>Readme</a> if you'd like to join the search!</i></div><br />\n";
 
 $res = $pdo->query("SELECT current_task!=0, COUNT(id) FROM workers GROUP BY current_task!=0");
 if ($res->rowCount() != 0) {
