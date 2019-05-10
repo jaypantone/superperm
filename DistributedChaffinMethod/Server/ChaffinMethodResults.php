@@ -2,7 +2,7 @@
 	$statusCache = "statusCache.html";
 	$cacheTime = 5;
 
-	if (file_exists($statusCache) && (time() - filemtime($statusCache)) < $statusCache) {
+	if (file_exists($statusCache) && (time() - filemtime($statusCache)) < $cacheTime) {
 		include("statusCache.html");
 		exit;
 	}
