@@ -658,12 +658,12 @@ function finishTask($id, $access, $pro, $str, $teamName) {
 							$res->execute([$teamName]);
 						}
 
-						$res = $pdo->prepare("SELECT count(id) FROM tasks WHERE n=? AND waste=? AND iteration=? AND (status='A' OR status='U')");
+						$res = $pdo->prepare("SELECT count(id) FROM tasks WHERE n=? AND waste=? AND iteration=? AND (status='A' OR status='U') FOR UPDATE");
 						$res->execute([$n, $w, $iter]);
 
 						$rowCount = $res->fetch(PDO::FETCH_NUM);
-						echo "Current remaining: {$rowCount}\n";
-						if ($rowCount == 0) {
+						echo "Current remaining: {$rowCount[0]}\n";
+						if ($rowCount[0] == 0) {
 							$result = finishedAllTasks($n, $w, $iter);
 						} else {
 							$result = "OK\n";
