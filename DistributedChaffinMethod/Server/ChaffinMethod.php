@@ -410,11 +410,11 @@ function cancelStalledTasks($maxMin) {
 				$cid = $row[2];
 				$access = mt_rand($A_LO,$A_HI);
 
-				$res = $pdo->prepare("UPDATE tasks SET status='U', access=? WHERE id=?");
-				$res->execute([$access, $id]);
+				$res2 = $pdo->prepare("UPDATE tasks SET status='U', access=? WHERE id=?");
+				$res2->execute([$access, $id]);
 
-				$res = $pdo->prepare("UPDATE workers SET current_task=0 WHERE id=?");
-				$res->execute([$cid]);
+				$res2 = $pdo->prepare("UPDATE workers SET current_task=0 WHERE id=?");
+				$res2->execute([$cid]);
 				
 				$cancelled++;
 			}
@@ -461,8 +461,8 @@ function cancelStalledClients($maxMin)
 			if ($stall > $maxMin) {
 				$id = $row[0];
 
-				$pdo->prepare("DELETE FROM workers WHERE id=$id");
-				$res->execute([$id]);
+				$res2 = $pdo->prepare("DELETE FROM workers WHERE id=?");
+				$res2->execute([$id]);
 
 				$cancelled++;
 			}

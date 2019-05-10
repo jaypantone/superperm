@@ -27,6 +27,8 @@ table.strings {border-style: solid; border-color: black;
 	border-collapse: collapse;
 	margin-bottom: 20px;
 }
+table.strings td.divider {border-bottom-width: 2px; border-bottom-color: black;}
+
 table.strings caption {padding: 10px; background-color: #eeeeee;
 	border-style: solid; border-color: black;
 	border-width: 2px; border-bottom-width: 0px;}
@@ -159,21 +161,54 @@ if ($res->rowCount() != 0) {
 }
 
 
+$row_width = 10;
+$names = array();
+$tasks = array();
+
 $res = $pdo->query("SELECT * FROM teams ORDER BY tasks_completed DESC");
 if ($res->rowCount() != 0) {
-	echo "<table class='strings'><caption>Top Teams</caption>\n";
+	echo "<table class='strings'><caption>Team Leaderboard</caption>\n";
 	$allRows = $res->fetchAll();
-	echo "<tr>\n";
+
 	foreach($allRows as $ind => $row) {
-		echo "<td class='center'>" . $row['team'] . "</th>\n";
+		array_push($names, $row['team']);
+		array_push($tasks, $row['tasks_completed']);
+
+		if (($ind + 1) % $row_width == 0) {
+			echo "<tr>\n";
+			foreach ($names as $name) {
+				echo "<td class='center'>" . $name . "</td>\n";
+			}
+			echo "</tr><tr>\n";
+			foreach ($tasks as $task) {
+				echo "<td class='center divider'>" . $task . "</td>\n";
+			}
+			echo "</tr>\n";
+			$names = array();
+			$tasks = array();
+		}
 	}
-	echo "</tr><tr>\n";
-	foreach($allRows as $ind => $row) {
-		echo "<td class='center'>" . $row['tasks_completed'] . "</th>\n";
+
+	if (($ind + 1) % $row_width != 0) {
+		echo "<tr>\n";
+		foreach ($names as $name) {
+			echo "<td class='center'>" . $name . "</td>\n";
+		}
+		for ($empty = ($ind + 1) % $row_width; $empty < $row_width; $empty++) {
+			echo "<td class='center'></td>\n";
+		}
+		echo "</tr><tr>\n";
+		foreach ($tasks as $task) {
+			echo "<td class='center divider'>" . $task . "</td>\n";
+		}
+		for ($empty = ($ind + 1) % $row_width; $empty < $row_width; $empty++) {
+			echo "<td class='center divider'></td>\n";
+		}
+		echo "</tr>\n";
 	}
-	echo "</tr>";
 	echo "</table>\n";
 }
+
 
 
 
