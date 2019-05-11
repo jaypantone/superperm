@@ -71,7 +71,7 @@ function handlePDOError($e) {
 	var_dump(debug_backtrace());
 	$result = ob_get_clean();
 
-	mail("jay.pantone@gmail.com", "PDO ERROR :(", $e->getMessage() . "\n" . $result);
+	mail("jay.pantone@gmail.com", "PDO ERROR v2 :(", $e->getMessage() . "\n" . $result);
 }
 
 function factorial($n) {

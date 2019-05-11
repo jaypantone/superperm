@@ -1,6 +1,6 @@
 <?php
 	$statusCache = "statusCache.html";
-	$cacheTime = 5;
+	$cacheTime = 30;
 
 	if (file_exists($statusCache) && (time() - filemtime($statusCache)) < $cacheTime) {
 		include("statusCache.html");
@@ -38,6 +38,17 @@ span.waste {color: #cc3333; font-weight: bold;}
 <body>
 
 <?php
+
+
+// function handlePDOError($e) {
+// 	print("Error: " . $e->getMessage());
+// 	ob_start();
+// 	var_dump(debug_backtrace());
+// 	$result = ob_get_clean();
+
+// 	mail("jay.pantone@gmail.com", "PDO ERROR v2 :(", $e->getMessage() . "\n" . $result);
+// }
+
 
 function decorateString($str, $n) {
 	if (is_string($str)) {
