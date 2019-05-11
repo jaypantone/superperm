@@ -67,7 +67,11 @@ function instanceCount($inc,$def,&$didUpdate) {
 
 function handlePDOError($e) {
 	print("Error: " . $e->getMessage());
-	mail("jay.pantone@gmail.com", "PDO ERROR :(", $e->getMessage());
+	ob_start();
+	var_dump(debug_backtrace());
+	$result = ob_get_clean();
+
+	mail("jay.pantone@gmail.com", "PDO ERROR :(", $e->getMessage() . "\n" . $result);
 }
 
 function factorial($n) {
@@ -147,6 +151,10 @@ function maybeUpdateWitnessStrings($n, $w, $p, $str, $pro, $teamName) {
 	global $pdo;
 	
 	try {			
+
+		$pdo->beginTransaction();
+		$pdo->exec("LOCK TABLES superperms WRITE, witness_strings WRITE");
+
 		if ($isSuper) {
 			$ip = $_SERVER['REMOTE_ADDR'];
 
@@ -154,7 +162,7 @@ function maybeUpdateWitnessStrings($n, $w, $p, $str, $pro, $teamName) {
 			$res->execute([$n, $w, $p, $str, $ip, $teamName]);
 		}
 
-		$pdo->beginTransaction();
+		
 		$res = $pdo->prepare("SELECT perms FROM witness_strings WHERE n=? AND waste=?" . ($p>=0 ? " FOR UPDATE" : ""));
 		$res->execute([$n, $w]);
 
@@ -206,6 +214,7 @@ function maybeUpdateWitnessStrings($n, $w, $p, $str, $pro, $teamName) {
 			}
 		}
 		$pdo->commit();
+		$pdo->exec("UNLOCK TABLES");
 		return $result;
 	} catch (Exception $e) {
 		$pdo->rollback();
@@ -222,6 +231,8 @@ function makeTask($n, $w, $pte, $str) {
 
 	try {
 		$pdo->beginTransaction();
+		$pdo->exec("LOCK TABLES tasks WRITE");
+
 
 		$res = $pdo->prepare("SELECT id FROM tasks WHERE n=? AND waste=? AND prefix=? AND perm_to_exceed=?");
 		$res->execute([$n, $w, $str, $pte]);
@@ -240,6 +251,7 @@ function makeTask($n, $w, $pte, $str) {
 		}
 		
 		$pdo->commit();
+		$pdo->exec("UNLOCK TABLES");
 		return $result;
 	} catch (Exception $e) {
 		$pdo->rollback();
@@ -259,6 +271,7 @@ function getTask($cid,$ip,$pi,$version,$teamName) {
 
 	try {
 		$pdo->beginTransaction();
+		$pdo->exec("LOCK TABLES workers WRITE, tasks WRITE, witness_strings WRITE");
 
 		$res = $pdo->prepare("SELECT * FROM workers WHERE id=? AND instance_num=? AND IP=? FOR UPDATE");
 		$res->execute([$cid, $pi, $ip]);
@@ -326,6 +339,8 @@ function getTask($cid,$ip,$pi,$version,$teamName) {
 			}
 		}
 		$pdo->commit();
+		$pdo->exec("UNLOCK TABLES");
+
 		return $result;
 	} catch (Exception $e) {
 		$pdo->rollback();
@@ -340,6 +355,7 @@ function checkMax($id, $access, $cid, $ip, $pi, $n, $w) {
 
 	try {
 		$pdo->beginTransaction();
+		$pdo->exec("LOCK TABLES tasks WRITE, workers WRITE, witness_strings WRITE");
 
 		$res = $pdo->prepare("SELECT status FROM tasks WHERE id=? AND access=? FOR UPDATE");
 		$res->execute([$id, $access]);
@@ -374,6 +390,7 @@ function checkMax($id, $access, $cid, $ip, $pi, $n, $w) {
 		}
 
 		$pdo->commit();
+		$pdo->exec("UNLOCK TABLES");
 		return $result;
 	} catch (Exception $e) {
 		$pdo->rollback();
@@ -391,6 +408,7 @@ function cancelStalledTasks($maxMin) {
 
 	try {
 		$pdo->beginTransaction();
+		$pdo->exec("LOCK TABLES tasks WRITE, workers WRITE");
 
 		$res = $pdo->query("SELECT id, TIMESTAMPDIFF(MINUTE,ts,NOW()), client_id FROM tasks WHERE status='A' FOR UPDATE");
 
@@ -427,6 +445,7 @@ function cancelStalledTasks($maxMin) {
 		}
 		
 		$pdo->commit();
+		$pdo->exec("UNLOCK TABLES");
 		return $result;
 		
 	} catch (Exception $e) {
@@ -446,6 +465,8 @@ function cancelStalledClients($maxMin)
 	try {
 
 		$pdo->beginTransaction();
+		$pdo->exec("LOCK TABLES workers WRITE");
+
 		$res = $pdo->query("SELECT id, TIMESTAMPDIFF(MINUTE,ts,NOW()) FROM workers FOR UPDATE");
 
 		$result = "";
@@ -475,6 +496,7 @@ function cancelStalledClients($maxMin)
 		}
 
 		$pdo->commit();		
+		$pdo->exec("UNLOCK TABLES");
 		return $result;
 	} catch (Exception $e) {
 		$pdo->rollback();
@@ -688,8 +710,9 @@ function finishTask($id, $access, $pro, $str, $teamName) {
 			$result = "Error: No match to id=$id, access=$access for the task being finalised. (It may have already been unexpectedly finalised.)\n";
 		}
 		
-		$pdo->exec("UNLOCK TABLES");
 		$pdo->commit();
+		$pdo->exec("UNLOCK TABLES");
+
 		return $result;
 	} catch (Exception $e) {
 		$pdo->rollback();
@@ -708,6 +731,7 @@ function splitTask($id, $access, $new_pref, $branchOrder) {
 	try {
 
 		$pdo->beginTransaction();
+		$pdo->exec("LOCK TABLES tasks WRITE, witness_strings WRITE, workers WRITE");
 
 		$res = $pdo->prepare("SELECT * FROM tasks WHERE id=? AND access=? FOR UPDATE");
 		$res->execute([$id, $access]);
@@ -798,6 +822,7 @@ function splitTask($id, $access, $new_pref, $branchOrder) {
 		}
 			
 		$pdo->commit();
+		$pdo->exec("UNLOCK TABLES");
 		return $result;
 
 	} catch (Exception $e) {
@@ -817,6 +842,8 @@ function register($pi, $teamName) {
 
 	try {
 		$pdo->beginTransaction();
+		$pdo->exec("LOCK TABLES workers WRITE");
+
 		$res = $pdo->query("SELECT COUNT(id) FROM workers");
 		
 		$ok = TRUE;
@@ -836,6 +863,7 @@ function register($pi, $teamName) {
 		}
 		
 		$pdo->commit();
+		$pdo->exec("UNLOCK TABLES");
 		return $result;
 
 	} catch (Exception $e) {
@@ -853,12 +881,14 @@ function unregister($cid,$ip,$pi)
 		
 	try {
 		$pdo->beginTransaction();
+		$pdo->exec("LOCK TABLES workers WRITE");
 		$res = $pdo->prepare("DELETE FROM workers WHERE id=? AND instance_num=? AND IP=?");
 		$res->execute([$cid, $pi, $ip]);
 
 		$result = "OK, client record deleted\n";
 	
 		$pdo->commit();
+		$pdo->exec("UNLOCK TABLES");
 		return $result;
 	} catch (Exception $e) {
 		$pdo->rollback();
